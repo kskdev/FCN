@@ -28,3 +28,4 @@ y = model.predictor(x[np.newaxis, :, :, :]).data.argmax(axis=1)[0]
 Image.fromarray(y.astype(np.uint8)).save('output.png')
 # 予測画像と比較するために入力画像をリサイズして出力
 img = Image.open(input_image).resize(size, Image.BILINEAR).save('input.png')
+

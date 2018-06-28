@@ -9,7 +9,7 @@ from chainer.training import extensions as ex
 from data import Dataset
 from model import FCN
 
-out_dir = './FCN-result'
+out_dir = './Result'
 size = (224, 224)
 class_num = 40
 batch = 8
@@ -19,8 +19,8 @@ train_epoch = 100
 save_model = 'model.npz'
 
 # 入力画像とラベル画像をglobで抽出できるように設定
-image_paths = './Data/Labels/*.png'
-label_paths = './Data/Images/*.png'
+image_paths = './Data/Images/*.png'
+label_paths = './Data/Labels/*.png'
 
 # ファイルパスをソート(入力画像と教師画像のファイル名が統一されているという前提のためペアをソートして合わせている)
 # この辺は人によってやり方がそれぞれなので，お好みで
@@ -28,7 +28,7 @@ image_paths = sorted(glob(image_paths))
 label_paths = sorted(glob(label_paths))
 
 # data.pyのDatasetクラスを利用
-# 因みに data_set[i][0]でi番目の入力画像，data_set[i][1]でi番目の教師画像を取得可能
+# 因みに data_set[i][0]でi番目の入力データ，data_set[i][1]でi番目の教師データを取得可能
 data_set = Dataset(image_paths, label_paths, size)
 
 valid_num = int(len(image_paths) * 0.2)  # 学習中の評価画像の2割を指定
@@ -71,7 +71,7 @@ trainer.extend(ex.PlotReport(['main/loss', 'val/main/loss'], 'epoch', file_name=
 trainer.extend(ex.PlotReport(['main/accuracy', 'val/main/accuracy'], 'epoch', file_name='accuracy.png'))
 
 # 学習ループの実行
-print('train loop is ready.')
+print('train loop is ready...')
 trainer.run()
 
 # 学習が終わったらその時のネットワークのパラメータを保存する
