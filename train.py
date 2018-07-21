@@ -19,27 +19,27 @@ train_epoch = 100
 save_model = 'model.npz'
 
 # 入力画像とラベル画像をglobで抽出できるように設定
-image_paths = './Data/Images/*.png'
-label_paths = './Data/Labels/*.png'
+image_train = './Data/Images/*.png'
+label_train = './Data/Labels/*.png'
+image_valid = './Data/Images/*.png'
+label_valid = './Data/Labels/*.png'
 
 # ファイルパスをソート(入力画像と教師画像のファイル名が統一されているという前提のためペアをソートして合わせている)
 # この辺は人によってやり方がそれぞれなので，お好みで
-image_paths = sorted(glob(image_paths))
-label_paths = sorted(glob(label_paths))
+image_train = sorted(glob(image_train))
+label_train = sorted(glob(label_train))
+image_valid = sorted(glob(image_valid))
+label_valid = sorted(glob(label_valid))
 
 # data.pyのDatasetクラスを利用
 # 因みに data_set[i][0]でi番目の入力データ，data_set[i][1]でi番目の教師データを取得可能
-data_set = Dataset(image_paths, label_paths, size)
-
-valid_num = int(len(image_paths) * 0.2)  # 学習中の評価画像の2割を指定
-split_point = len(image_paths) - valid_num
-# 学習データと評価データを split_point 番目で分割する
-train, valid = datasets.split_dataset_random(data_set, split_point, seed=0)
+data_train = Dataset(image_train, label_train, size)
+data_valid = Dataset(image_valid, label_valid, size)
 
 # 学習及び評価用のiteratorオブジェクトを生成
 # (マルチプロセス化するなら SerialIterator を MultiprocessIterator に変更)
-train_iter = iterators.SerialIterator(train, batch, repeat=True, shuffle=True)
-valid_iter = iterators.SerialIterator(valid, batch, repeat=False, shuffle=False)
+iter_train = iterators.SerialIterator(data_train, batch, repeat=True, shuffle=True)
+iter_valid = iterators.SerialIterator(data_valid, batch, repeat=False, shuffle=False)
 
 # モデルオブジェクトを生成
 model = L.Classifier(FCN(class_num=class_num))
@@ -48,7 +48,7 @@ optim = optimizers.MomentumSGD(lr=initial_lr)
 optim.setup(model)
 
 # 学習を進めるためのプロセスを定義(複雑な学習はupdaterも自作するようになるかも)
-updater = training.StandardUpdater(train_iter, optim, device=gpu_id)
+updater = training.StandardUpdater(iter_train, optim, device=gpu_id)
 trainer = training.Trainer(updater, (train_epoch, 'epoch'), out=out_dir)
 
 # --- Extensions --- #
@@ -59,7 +59,7 @@ trainer.extend(ex.LogReport())
 # 学習率の記録
 trainer.extend(ex.observe_lr())
 # 評価画像によるモデルの性能評価
-trainer.extend(ex.Evaluator(valid_iter, model, device=gpu_id), name='val')
+trainer.extend(ex.Evaluator(iter_valid, model, device=gpu_id), name='val')
 # 学習の様子を画面に出力(正確にはPrintReport()の引数のoutに合わせて出力)
 lst = ['epoch', 'main/loss', 'main/accuracy', 'val/main/loss', 'val/main/accuracy', 'elapsed_time', 'lr']
 trainer.extend(ex.PrintReport(lst))

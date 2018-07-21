@@ -22,9 +22,19 @@ def read_label(label_path, resize):
     return np.asarray(lbl, dtype=np.int32)
 
 
+def augment_data(image, label):
+    # 50%の確率で画像を左右反転する(Data Augmentationに相当)
+    # TODO 挙動がホントに正しい？
+    if np.random.rand() > 0.5:
+        image = iamge[..., ::-1]
+        label = label[..., ::-1]
+
+    return image, label
+
+
 # chainerのiteratorにデータを渡すための処理
 class Dataset(chainer.dataset.DatasetMixin):
-    def __init__(self, images, labels, size=(224, 224)):
+    def __init__(self, images, labels, size=(224, 224), is_train=False):
         '''
         :param images: 入力画像のパスのリスト
         :param labels: 教師画像のパスのリスト
@@ -47,10 +57,9 @@ class Dataset(chainer.dataset.DatasetMixin):
         # 入力画像の正規化 (認識精度を上げるための処理)
         img = image_norm(img)
 
-        # 50%の確率で画像を左右反転する(Data Augmentationに相当)
-        # TODO 挙動がホントに正しい？
-        if np.random.rand() > 0.5:
-            img = img[..., ::-1]
-            lbl = lbl[..., ::-1]
-
-        return img, lbl
+        # is_trainingはtrainとvalidでデータセットを変えるための処理(Data Augmentation等)
+        if is_train:
+            return augment_data(img, lbl):
+        # 検証用，テスト用の振る舞いをしてほしい場合
+        else:
+            return img, lbl
