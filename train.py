@@ -64,7 +64,7 @@ trainer.extend(ex.Evaluator(iter_valid, model, device=gpu_id), name='val')
 lst = ['epoch', 'main/loss', 'main/accuracy', 'val/main/loss', 'val/main/accuracy', 'elapsed_time', 'lr']
 trainer.extend(ex.PrintReport(lst))
 # 学修の進捗をプログレスバーで表現
-trainer.extend(ex.ProgressBar())
+trainer.extend(ex.ProgressBar(update_interval=1))
 # 学習のLossを可視化
 trainer.extend(ex.PlotReport(['main/loss', 'val/main/loss'], 'epoch', file_name='loss.png'))
 # 学習のAccuracyを可視化
