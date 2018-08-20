@@ -7,7 +7,7 @@ import chainer
 
 # 入力画像の読み込み処理の定義 (3ch)
 def read_image(image_path, resize):
-    img = Image.open(image_path).resize(resize, Image.BILINEAR)  # img:(width, height, RGB3ch)
+    img = Image.open(image_path).convert('RGB').resize(resize, Image.BILINEAR)  # img:(width, height, RGB3ch)
     return np.asarray(img).transpose(2, 0, 1).astype(np.float32)  # transposeにより，img:(RGB3ch, width, height)となる
 
 
@@ -26,7 +26,7 @@ def augment_data(image, label):
     # 50%の確率で画像を左右反転する(Data Augmentationに相当)
     # TODO 挙動がホントに正しい？
     if np.random.rand() > 0.5:
-        image = iamge[..., ::-1]
+        image = image[..., ::-1]
         label = label[..., ::-1]
 
     return image, label
@@ -57,9 +57,10 @@ class Dataset(chainer.dataset.DatasetMixin):
         # 入力画像の正規化 (認識精度を上げるための処理)
         img = image_norm(img)
 
-        # is_trainingはtrainとvalidでデータセットを変えるための処理(Data Augmentation等)
-        if is_train:
-            return augment_data(img, lbl):
-        # 検証用，テスト用の振る舞いをしてほしい場合
-        else:
-            return img, lbl
+#         # is_trainingはtrainとvalidでデータセットを変えるための処理(Data Augmentation等)
+#         if is_train:
+#             return augment_data(img, lbl)
+#         # 検証用，テスト用の振る舞いをしてほしい場合
+#         else:
+#             return img, lbl
+        return img, lbl
