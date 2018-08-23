@@ -1,19 +1,56 @@
-# Fully Convolutional Netoworksの実装
-trainerを使った簡単な実装 <br>
+# Semantic Segmentation Network (FCN)の実装
+chainerのtrainer機能を用いた簡単な実装 <br>
 入力画像と教師画像，クラス数とかを合わせれば多分動くはず...<br>
-詳しい説明は気が向いたら追加
+目的はtrainer機能を使うおべんきょーとしてやってみただけ．<br>
+故に，ネットワークの説明とかはしない．
 
-predict.pyは入力画像に対して，セグメンテーション結果の画像を出力する．
-ただし，グレースケール画像として出力されるため，カラフルな感じの出力にしたければまた別のプログラムが必要．
-そのプログラムはまた後で用意する予定(探せばあるかも？？)
+trainer を使う利点はトレーニング方法をある程度の規格化とExtensionの利用だと思う．
+(プログレスバーを見てるだけで癒される)
 
-## 何故今頃FCN?
-作成した一番の目的は，chainerの便利機能の一つである trainer を使い方の勉強？がメインの目的 <br>
-特にtrainerによる学習方法におけるデータセットの作り方が理解出来ず，オリジナルのデータセットで学習方法が分からないことがあったため．
+READMEが雑だが，編集は面倒だからまたいつの日か
 
-なるべくコメントを付ける予定(数か月後の自分用)
 
-ResNetベースのネットワーク(PSPNetやDeepLab等)で書こうかと思ったが，VGG16ベースのネットワークはネットワーク定義がシンプルで分かりやすいのでFCNを選びました．
+## Environment
+- Python:3.5.2 (Anaconda3 4.2.0)
 
-READMEが雑(編集は面倒だからまた今度)
+| Library | Version |
+|  :---:  |  :---:  |
+|cupy     |4.2.0    |
+|chainer  |4.2.0    |
+バージョンを指定してインストールする場合は`pip install cupy==4.2.0`のように行う．
 
+numpy, pillow(PIL)等が必要だが，Anacondaをインストールしてあればデフォルトで入ってるはず...
+<br>
+無ければpip install hogeで入るはず...
+
+
+## Learning
+学習はtrain.pyファイルの中身を編集(主にデータセットまでのパスやハイパーパラメータの調整)し，`python train.py` でOK．
+<br>
+推論結果が欲しければ学習時と同様にpredict.pyを編集し，`python predict.py`を実行すれば良い．
+<br>
+同様に定量評価もevaluate.pyを編集し，`python evaluate.py`でおｋ
+<br>
+parse モジュールを使わないのはあんまり好きじゃないから
+
+#### train.py
+モデルのフィッティングを行うためのファイル．<br>
+一番重要？
+#### data.py
+画像の読み込みや学習を行うためのデータセットを作るためのモジュール．
+#### model.py
+ネットワークが定義されたファイル
+#### predict.py
+train.py で生成したパラメータを用いて推論を行うファイル．<br>
+出力される画像の画素値はラベルIDとなっている．
+#### evaluate.py
+性能評価を定量的に行うためのファイル．<br>
+Pixel Accuracy, Class Accuracy, Mean IOUを求める．
+
+## Schedule (気が向いたらいつか更新するリスト)
+- 推論結果画像がラベルIDがそのまま画素値になっているため，見づらいのでRGBでカラフルに表現するファイルを追加予定
+- FCN 以外のモデルファイルを追加．めんどかったらやらん (SegNet, ICNet, U-Net, PSPNet, DeepLab...)
+- Data Augmentation のバリエーションを増やす(かも)
+- 入力正規化方法ももう少し検討
+- Updaterを StandardUpdaterに任せているので自作Updaterに置き換える
+- etc...

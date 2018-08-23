@@ -4,7 +4,7 @@ import chainer.functions as F
 
 
 class FCN(chainer.Chain):
-    def __init__(self, class_num=41):
+    def __init__(self, class_num):
         super(FCN, self).__init__()
         with self.init_scope():
             self.conv1_1 = L.Convolution2D(3, 64, 3, stride=1, pad=1)
