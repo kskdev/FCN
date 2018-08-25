@@ -47,6 +47,9 @@ train.py で生成したパラメータを用いて推論を行うファイル�
 #### evaluate.py
 性能評価を定量的に行うためのファイル．<br>
 Pixel Accuracy, Class Accuracy, Mean IOUを求める．
+#### convert.py
+predict.py の出力をカラフルにする．<br>
+なるべく高速化したいところ
 
 ## Schedule (気が向いたらいつか更新するリスト)
 - 推論結果画像がラベルIDがそのまま画素値になっているため，見づらいのでRGBでカラフルに表現するファイルを追加予定
