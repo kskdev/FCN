@@ -50,7 +50,7 @@ Pixel Accuracy, Class Accuracy, Mean IOUを求める．
 
 ## Schedule (気が向いたらいつか更新するリスト)
 - 推論結果画像がラベルIDがそのまま画素値になっているため，見づらいのでRGBでカラフルに表現するファイルを追加予定
- - convert.py を追加
+  - convert.py を追加
 - FCN 以外のモデルファイルを追加．めんどかったらやらん (SegNet, ICNet, U-Net, PSPNet, DeepLab...)
 - Data Augmentation のバリエーションを増やす(かも)
 - 入力正規化方法ももう少し検討
