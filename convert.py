@@ -2,15 +2,16 @@
 
 import glob
 import os
+import os.path as osp
+import colorsys
+from itertools import starmap
 
 import cv2  # 他のファイルがPILで統一してたはずなので統一した方がいいかも
 import numpy as np
 
 
 class Convert:
-    def __init__(self, size):
-        self.size = size
-        self.arr_4ch = np.zeros((self.size[1], self.size[0], 4), dtype=np.uint8)
+    def __init__(self):
         self.label_id_rgb = np.array(
             # Label_ID, R,G,B
             [[0, 0, 0, 0],
@@ -55,19 +56,47 @@ class Convert:
              [39, 255, 85, 170],
              [40, 0, 170, 170]],
             dtype=np.uint8)
+        self.label_id_rgb = self.palette_from_hue(20)
+
+    def palette_from_hue(self, class_num):
+        """
+        グレースケール表示だと味気無いから色は付けたいけどカラーアサインがだるい時に使う
+        クラス数を引数に入力するだけで色相値をクラス数で等分し，RGBに直してパレットを作る
+        あまり使わないほうがいい...(特にクラス数が多い場合)
+        完全にオマケ
+        """
+        # generate rgb palette from class_num (value min:0, max:1)
+        hsv2rgb = lambda h: colorsys.hsv_to_rgb(h, 1., 1.)
+        palette = [hsv2rgb(h / (class_num + 1)) for h in range(class_num)]
+
+        # transform palette (x255 and float2int)
+        rgb_tup_scaling_x255 = lambda rgb_tup: list(map(lambda v: int(v * 255.), rgb_tup))
+        palette = np.asarray(list(map(rgb_tup_scaling_x255, palette)), dtype=np.uint8)
+
+        # generate class id
+        class_ids = np.arange(start=0, stop=class_num, step=1, dtype=np.uint8).reshape((-1, 1))
+
+        # concatenate class_ids and palette
+        palette = np.hstack((class_ids, palette))
+        return palette
 
     # ----------------------------
     # LABEL(1ch) to BGR(3ch)
     # ----------------------------
     def label_to_color(self, label_arr):
         '''
-        PILとOpenCVの画像読み込み、書き出し辺りのスピードを調査すること
-        for文を置き換えれないか考えること
+        遅い
+        推論ラベルが予め登録されたラベルと一致しない場合は全て黒色になるので要注意
         '''
-        self.arr_4ch[:, :, 0] = label_arr
-        for i in np.unique(label_arr):
-            self.arr_4ch[np.where(self.arr_4ch[:, :, 0] == i)] = self.label_id_rgb[i]
-        return self.arr_4ch[:, :, 1:4]
+        size = label_arr.shape
+        arr_4ch = np.zeros((size[0], size[1], 4), dtype=np.uint8)
+        arr_4ch[:, :, 0] = label_arr
+
+        set_cls = set(self.label_id_rgb[:, 0])
+        set_prd = set(np.unique(label_arr))
+        for i in set_prd & set_cls:
+            arr_4ch[np.where(arr_4ch[:, :, 0] == i)] = self.label_id_rgb[i]
+        return arr_4ch[:, :, 1:4]
 
     # ----------------------------
     # BGR(3ch) to LABEL(1ch)
@@ -102,15 +131,14 @@ class Convert:
 
 if __name__ == '__main__':
     paths = glob.glob("./image/pred*.png")
+    paths = glob.glob("/mnt/WDRed3TB/Dataset/BDD100K/bdd100k/seg/labels/val/*.png")[:100]
     out_dir = './out'
-    Size = (640, 480)
 
-    os.makedirs(out_dir, exist_ok=False)
-    cvt = Convert(size=Size)
-    for f in paths:
-        lbl = cv2.resize(cv2.imread(f, 0), dsize=Size)
-        rgb = cvt.label_to_color(lbl)
-        save_file = f.split('/')[-1]
-        cv2.imwrite(os.path.join(out_dir, 'color_' + save_file), rgb)
+    os.makedirs(out_dir, exist_ok=True)
+    cvt = Convert()
 
+    save_paths = map(lambda path: osp.join(out_dir, 'rgb_' + osp.basename(path)), paths)
+    images = map(lambda f: cvt.label_to_color(cv2.imread(f, 0)), paths)
 
+    for f, img in zip(save_paths, images):
+        cv2.imwrite(f, img)
