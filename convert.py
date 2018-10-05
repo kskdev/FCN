@@ -4,15 +4,14 @@ import glob
 import os
 import os.path as osp
 import colorsys
-from itertools import starmap
 
-import cv2  # 他のファイルがPILで統一してたはずなので統一した方がいいかも
+from PIL import Image
 import numpy as np
 
 
 class Convert:
     def __init__(self):
-        self.label_id_rgb = np.array(
+        self.palette = np.array(
             # Label_ID, R,G,B
             [[0, 0, 0, 0],
              [1, 85, 0, 0],
@@ -56,7 +55,6 @@ class Convert:
              [39, 255, 85, 170],
              [40, 0, 170, 170]],
             dtype=np.uint8)
-        self.label_id_rgb = self.palette_from_hue(20)
 
     def palette_from_hue(self, class_num):
         """
@@ -70,8 +68,8 @@ class Convert:
         palette = [hsv2rgb(h / (class_num + 1)) for h in range(class_num)]
 
         # transform palette (x255 and float2int)
-        rgb_tup_scaling_x255 = lambda rgb_tup: list(map(lambda v: int(v * 255.), rgb_tup))
-        palette = np.asarray(list(map(rgb_tup_scaling_x255, palette)), dtype=np.uint8)
+        rgb_tup_x255 = lambda rgb_tup: list(map(lambda v: int(v * 255.), rgb_tup))
+        palette = np.asarray(list(map(rgb_tup_x255, palette)), dtype=np.uint8)
 
         # generate class id
         class_ids = np.arange(start=0, stop=class_num, step=1, dtype=np.uint8).reshape((-1, 1))
@@ -88,14 +86,14 @@ class Convert:
         遅い
         推論ラベルが予め登録されたラベルと一致しない場合は全て黒色になるので要注意
         '''
-        size = label_arr.shape
-        arr_4ch = np.zeros((size[0], size[1], 4), dtype=np.uint8)
+        size = label_arr.size
+        arr_4ch = np.zeros((size[1], size[0], 4), dtype=np.uint8)
         arr_4ch[:, :, 0] = label_arr
 
-        set_cls = set(self.label_id_rgb[:, 0])
+        set_cls = set(self.palette[:, 0])
         set_prd = set(np.unique(label_arr))
         for i in set_prd & set_cls:
-            arr_4ch[np.where(arr_4ch[:, :, 0] == i)] = self.label_id_rgb[i]
+            arr_4ch[np.where(arr_4ch[:, :, 0] == i)] = self.palette[i]
         return arr_4ch[:, :, 1:4]
 
     # ----------------------------
@@ -112,7 +110,7 @@ class Convert:
 
         lst = unique_2d(np.reshape(rgb_arr, newshape=(-1, 3)))
         for i, c in enumerate(lst):
-            self.arr_4ch[np.where(self.arr_4ch[:, :, 1:4] == c)] = self.label_id_rgb[i]
+            self.arr_4ch[np.where(self.arr_4ch[:, :, 1:4] == c)] = self.palette[i]
         return self.arr_4ch[:, :, 0]
 
     # 一応動くやつ (あまり早くから使いたくない(numbaで高速化は確認したがnumba依存はしたくない))
@@ -120,7 +118,7 @@ class Convert:
         img = bgr_img_arr.tolist()
 
         def bgr_to_label_pix(bgr):
-            for k, b, g, r in self.label_id_rgb:
+            for k, b, g, r in self.palette:
                 if bgr == [b, g, r]:
                     return k
             return 0
@@ -131,14 +129,13 @@ class Convert:
 
 if __name__ == '__main__':
     paths = glob.glob("./image/pred*.png")
-    paths = glob.glob("/mnt/WDRed3TB/Dataset/BDD100K/bdd100k/seg/labels/val/*.png")[:100]
     out_dir = './out'
 
     os.makedirs(out_dir, exist_ok=True)
     cvt = Convert()
 
     save_paths = map(lambda path: osp.join(out_dir, 'rgb_' + osp.basename(path)), paths)
-    images = map(lambda f: cvt.label_to_color(cv2.imread(f, 0)), paths)
+    images = map(lambda f: cvt.label_to_color(Image.open(f)), paths)
 
     for f, img in zip(save_paths, images):
-        cv2.imwrite(f, img)
+        Image.fromarray(img).save(f)
