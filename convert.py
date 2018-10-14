@@ -3,7 +3,7 @@
 import glob
 import os
 import os.path as osp
-import colorsys
+from colorsys import hsv_to_rgb
 
 from PIL import Image
 import numpy as np
@@ -56,27 +56,27 @@ class Convert:
              [40, 0, 170, 170]],
             dtype=np.uint8)
 
-    def palette_from_hue(self, class_num):
+    def palette_from_hue(self, classes, background_id=0):
         """
-        グレースケール表示だと味気無いから色は付けたいけどカラーアサインがだるい時に使う
-        クラス数を引数に入力するだけで色相値をクラス数で等分し，RGBに直してパレットを作る
-        あまり使わないほうがいい...(特にクラス数が多い場合)
-        完全にオマケ
+        グレースケール表示を色付けする
+        カラーアサインは色相をクラス数で等分し，RGBへ変換したパレットを作成する
+        遊びで作ったものなのでカラーアサインは分かりやすいように自分で割り当てるべき
         """
         # generate rgb palette from class_num (value min:0, max:1)
-        hsv2rgb = lambda h: colorsys.hsv_to_rgb(h, 1., 1.)
-        palette = [hsv2rgb(h / (class_num + 1)) for h in range(class_num)]
+        palette = [hsv_to_rgb(h / classes, 1., 1.) for h in range(classes)]
 
         # transform palette (x255 and float2int)
-        rgb_tup_x255 = lambda rgb_tup: list(map(lambda v: int(v * 255.), rgb_tup))
-        palette = np.asarray(list(map(rgb_tup_x255, palette)), dtype=np.uint8)
+        palette = np.asarray(palette, dtype=np.float64) * 255.
+        palette = palette.astype(np.uint8)
 
         # generate class id
-        class_ids = np.arange(start=0, stop=class_num, step=1, dtype=np.uint8).reshape((-1, 1))
+        class_ids = np.arange(0, classes, step=1, dtype=np.uint8).reshape((-1, 1))
+
+        # Reset Background ID
+        palette[background_id] = np.array([0, 0, 0], dtype=np.uint8)
 
         # concatenate class_ids and palette
-        palette = np.hstack((class_ids, palette))
-        return palette
+        return np.hstack((class_ids, palette))
 
     # ----------------------------
     # LABEL(1ch) to BGR(3ch)
