@@ -47,15 +47,13 @@ train.py で生成したパラメータを用いて推論を行うファイル�
 #### evaluate.py
 性能評価を定量的に行うためのファイル．<br>
 Pixel Accuracy, Class Accuracy, Mean IOUを求める．
-#### convert.py
-predict.py の出力をカラフルにする．<br>
-なるべく高速化したいところ
+#### color.py
+predict.py の出力をカラフルにしたり，カラフルなラベル画像をIDの配列に変更したりするファイル．<br>
+それなりに綺麗書いたつもりだがアルゴリズム的に修正箇所はある．アルゴリズムで高速化したいところ(GPUやJITコンパイラは邪道)
 
 ## Schedule (気が向いたらいつか更新するリスト)
-- 推論結果画像がラベルIDがそのまま画素値になっているため，見づらいのでRGBでカラフルに表現するファイルを追加予定
-  - convert.py を追加
 - FCN 以外のモデルファイルを追加．めんどかったらやらん (SegNet, ICNet, U-Net, PSPNet, DeepLab...)
 - Data Augmentation のバリエーションを増やす(かも)
 - 入力正規化方法ももう少し検討
 - Updaterを StandardUpdaterに任せているので自作Updaterに置き換える
-- etc...
+- etc...(正直もう面倒)
